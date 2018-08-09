@@ -8,6 +8,11 @@ int main(int argn, char* args[]) {
   json11::Json::array json;
   sasago::Parser parser(lexer, json);
   int res = parser.parse();
-  std::cout << "res: " << res << std::endl;
-  std::cout << json11::Json(json).dump() << std::endl;
+  if(res == 0) {
+    std::cout << json11::Json(json).dump() << std::endl;
+  }
+  else {
+    std::cout << "parser error" << std::endl;
+  }
+  return res;
 }

@@ -24,9 +24,13 @@ using namespace sasago;
 \) {
   return Parser::token::RPAR;
 }
--?[0-9]+ {
+-?[[:digit:]]+ {
   lval.build<int>(std::stoi(YYText()));
   return Parser::token::INT;
+}
+[[:lower:]][[:alnum:]_]* {
+  lval.build<std::string>(YYText());
+  return Parser::token::VAR;
 }
 [\?!~][!%&\*\+-\./<=>\?@\^\|~]* {
   lval.build<std::string>(YYText());
@@ -39,22 +43,6 @@ using namespace sasago;
 [\+-][!%&\*\+-\./<=>\?@\^\|~]* {
   lval.build<std::string>(YYText());
   return Parser::token::INFIX2;
-}
-[\^:@][!%&\*\+-\./<=>\?@\^\|~]* {
-  lval.build<std::string>(YYText());
-  return Parser::token::INFIX3;
-}
-[<=>][!%&\*\+-\./<=>\?@\^\|~]* {
-  lval.build<std::string>(YYText());
-  return Parser::token::INFIX4;
-}
-&[!%&\*\+-\./<=>\?@\^\|~]* {
-  lval.build<std::string>(YYText());
-  return Parser::token::INFIX5;
-}
-\|[!%&\*\+-\./<=>\?@\^\|~]* {
-  lval.build<std::string>(YYText());
-  return Parser::token::INFIX6;
 }
 
 %%
