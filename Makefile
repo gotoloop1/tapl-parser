@@ -1,8 +1,6 @@
 NAME := sasago
 
-CXX      := g++
-CXXFLAGS := -g2 -Wextra
-LIBS     :=
+CXX := g++ -g2 -Wextra
 
 LEX  := flex
 YACC := bison
@@ -26,11 +24,11 @@ DEPENDS      := $(addprefix $(BUILD_DIR)/,$(SOURCE_NAMES:.cpp=.depend))
 all: $(DEPENDS) $(NAME)
 
 $(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LIBS) -o $(NAME) $^
+	$(CXX) -o $(NAME) $^
 
 $(BUILD_DIR)/%.o: $(TMP_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(LIBS) -c -o $@ $^
+	$(CXX) -c -o $@ $^
 
 $(TMP_DIR)/%.cpp: $(SOURCE_DIR)/%.cpp
 	@mkdir -p $(TMP_DIR)
@@ -58,7 +56,7 @@ $(TMP_DIR)/json11.hpp: $(LIB_DIR)/json11/json11.hpp
 
 $(BUILD_DIR)/%.depend: $(TMP_DIR)/%.cpp $(TMP_HEADERS)
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(LIBS) -MM $< > $@
+	$(CXX) -MM $< > $@
 ifneq "$(MAKECMDGOALS)" "clean"
 -include $(DEPENDS)
 endif
