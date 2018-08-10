@@ -27,12 +27,9 @@ using namespace json11;
 %token <std::string> PREFIX INFIX1 INFIX2
 %token SEP LPAR RPAR
 
-%type <json11::Json> factor s_factor_s
-%type <json11::Json> prefix prefix_s s_prefix_s
-%type <json11::Json> apply apply_s
-%type <json11::Json> term
-%type <json11::Json> infix_1 infix_2
-%type <json11::Json> expr
+%type <json11::Json> factor
+%type <json11::Json> prefix apply apply_s term
+%type <json11::Json> infix_1 infix_2 expr
 
 %start input
 
@@ -72,48 +69,18 @@ term
 	: apply {
 		$$ = $1;
 	}
-	| apply_s {
-		$$ = $1;
-	}
-	| SEP term {
+	| SEP apply {
 		$$ = $2;
 	}
 apply_s
-	: prefix_s {
-		$$ = $1;
-	}
-	| s_prefix_s {
-		$$ = $1;
-	}
-	| apply SEP {
-		$$ = $1;
-	}
-	| apply s_prefix_s {
-		$$ = Json::object{
-			{"rule", "apply"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-	| apply_s prefix_s {
-		$$ = Json::object{
-			{"rule", "apply"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-	| apply_s s_prefix_s {
-		$$ = Json::object{
-			{"rule", "apply"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-	| apply_s SEP {
+	: apply SEP {
 		$$ = $1;
 	}
 apply
-	: prefix {
+	: apply_s {
+		$$ = $1;
+	}
+	| prefix {
 		$$ = $1;
 	}
   | apply_s prefix {
@@ -121,39 +88,6 @@ apply
 			{"rule", "apply"},
 			{"func", $1},
 			{"arg", $2}
-		};
-	}
-s_prefix_s
-	: s_factor_s {
-		$$ = $1;
-	}
-prefix_s
-	: PREFIX s_prefix_s {
-		$$ = Json::object{
-			{"rule", "prefix"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-	| PREFIX SEP s_prefix_s {
-		$$ = Json::object{
-			{"rule", "prefix"},
-			{"func", $1},
-			{"arg", $3}
-		};
-	}
-	| PREFIX prefix_s {
-		$$ = Json::object{
-			{"rule", "prefix"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-	| PREFIX SEP prefix_s {
-		$$ = Json::object{
-			{"rule", "prefix"},
-			{"func", $1},
-			{"arg", $3}
 		};
 	}
 prefix
@@ -174,12 +108,11 @@ prefix
 			{"arg", $3}
 		};
 	}
-s_factor_s
+factor
 	: LPAR expr RPAR {
 		$$ = $2;
 	}
-factor
-	: INT {
+	| INT {
 		$$ = Json::object{
 			{"rule", "constant"},
 			{"type", "int"},
