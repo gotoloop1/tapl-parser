@@ -27,7 +27,12 @@ using namespace json11;
 %token <std::string> PREFIX INFIX1 INFIX2
 %token SEP LPAR RPAR
 
-%type <json11::Json> factor factor_s s_factor_s term term_s expr_1 expr_2 expr
+%type <json11::Json> factor s_factor_s
+%type <json11::Json> prefix prefix_s s_prefix_s
+%type <json11::Json> apply apply_s
+%type <json11::Json> term
+%type <json11::Json> infix_1 infix_2
+%type <json11::Json> expr
 
 %start input
 
@@ -38,86 +43,140 @@ input
 		json.push_back($1);
 	}
 expr
-	: expr_2 {
+	: infix_2 {
 		$$ = $1;
 	}
-expr_2
-	: expr_1 {
+infix_2
+	: infix_1 {
 		$$ = $1;
 	}
-	| expr_2 INFIX2 expr_1 {
+	| infix_2 INFIX2 infix_1 {
 		$$ = Json::object{
 			{"rule", "infix"},
 			{"func", $2},
 			{"arg", Json::array{$1, $3}}
 		};
 	}
-expr_1
+infix_1
 	: term {
 		$$ = $1;
 	}
-	| expr_1 INFIX1 term {
+	| infix_1 INFIX1 term {
 		$$ = Json::object{
 			{"rule", "infix"},
 			{"func", $2},
 			{"arg", Json::array{$1, $3}}
 		};
 	}
-term_s
-	: factor_s {
-		$$ = $1;
-	}
-	| term_s factor_s {
-		$$ = Json::object{
-			{"rule", "apply"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-	| term s_factor_s {
-		$$ = Json::object{
-			{"rule", "apply"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
 term
-	: term_s {
+	: apply {
 		$$ = $1;
 	}
-	| factor {
+	| apply_s {
 		$$ = $1;
 	}
-  | term_s factor {
-		$$ = Json::object{
-			{"rule", "apply"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-s_factor_s
-	: LPAR expr RPAR {
+	| SEP term {
 		$$ = $2;
 	}
-factor_s
+apply_s
+	: prefix_s {
+		$$ = $1;
+	}
+	| s_prefix_s {
+		$$ = $1;
+	}
+	| apply SEP {
+		$$ = $1;
+	}
+	| apply s_prefix_s {
+		$$ = Json::object{
+			{"rule", "apply"},
+			{"func", $1},
+			{"arg", $2}
+		};
+	}
+	| apply_s prefix_s {
+		$$ = Json::object{
+			{"rule", "apply"},
+			{"func", $1},
+			{"arg", $2}
+		};
+	}
+	| apply_s s_prefix_s {
+		$$ = Json::object{
+			{"rule", "apply"},
+			{"func", $1},
+			{"arg", $2}
+		};
+	}
+	| apply_s SEP {
+		$$ = $1;
+	}
+apply
+	: prefix {
+		$$ = $1;
+	}
+  | apply_s prefix {
+		$$ = Json::object{
+			{"rule", "apply"},
+			{"func", $1},
+			{"arg", $2}
+		};
+	}
+s_prefix_s
 	: s_factor_s {
 		$$ = $1;
 	}
-	| factor SEP {
-		$$ = $1;
-	}
-	| PREFIX factor_s {
+prefix_s
+	: PREFIX s_prefix_s {
 		$$ = Json::object{
 			{"rule", "prefix"},
 			{"func", $1},
 			{"arg", $2}
 		};
 	}
-	| SEP factor_s {
-		$$ = $2;
+	| PREFIX SEP s_prefix_s {
+		$$ = Json::object{
+			{"rule", "prefix"},
+			{"func", $1},
+			{"arg", $3}
+		};
 	}
-	| factor_s SEP {
+	| PREFIX prefix_s {
+		$$ = Json::object{
+			{"rule", "prefix"},
+			{"func", $1},
+			{"arg", $2}
+		};
+	}
+	| PREFIX SEP prefix_s {
+		$$ = Json::object{
+			{"rule", "prefix"},
+			{"func", $1},
+			{"arg", $3}
+		};
+	}
+prefix
+	: factor {
 		$$ = $1;
+	}
+	| PREFIX prefix {
+		$$ = Json::object{
+			{"rule", "prefix"},
+			{"func", $1},
+			{"arg", $2}
+		};
+	}
+	| PREFIX SEP prefix {
+		$$ = Json::object{
+			{"rule", "prefix"},
+			{"func", $1},
+			{"arg", $3}
+		};
+	}
+s_factor_s
+	: LPAR expr RPAR {
+		$$ = $2;
 	}
 factor
 	: INT {
@@ -132,16 +191,6 @@ factor
 			{"rule", "variable"},
 			{"value", $1}
 		};
-	}
-	| PREFIX factor {
-		$$ = Json::object{
-			{"rule", "prefix"},
-			{"func", $1},
-			{"arg", $2}
-		};
-	}
-	| SEP factor {
-		$$ = $2;
 	}
 
 %%
