@@ -4,5 +4,5 @@
 
 class Lexer : public yyFlexLexer {
 public:
-	int yylex(sasago::Parser::semantic_type& lval);
+	int yylex(tapl::Parser::semantic_type& lval);
 };

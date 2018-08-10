@@ -1,4 +1,4 @@
-NAME := sasago
+NAME := tapl
 
 CXX := g++ -g2 -Wextra
 
