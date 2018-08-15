@@ -1,23 +1,29 @@
-第5章ののパーサ
+第9章のパーサ
 
 #例
-## \a -> \b -> a b
+## \a : (\A -> B) -> a
 {
-  rule: "lambda",
-  arg: "a",
-  body: {
-    rule: "lambda",
-    arg: "b",
-    body: {
-      rule: "apply",
-      func: {
-        rule: "variable",
-        value, "a"
+  "rule": "lambda",
+  "arg": {
+    "rule": "annotation",
+    "type": {
+      "rule": "lambda",
+      "arg": {
+        "rule": "primitive",
+        "value": "A"
       },
-      arg: {
-        rule: "variable",
-        value, "b"
+      "body": {
+        "rule": "primitive",
+        "value": "B"
       }
+    },
+    "value": {
+      "rule": "variable",
+      "value": "a"
     }
+  },
+  "body": {
+    "rule": "variable",
+    "value": "a"
   }
 }

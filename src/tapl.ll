@@ -24,15 +24,52 @@ using namespace tapl;
 \) {
   return Parser::token::RPAR;
 }
-[[:lower:]][[:alnum:]_]* {
-  lval.build<std::string>(YYText());
-  return Parser::token::VAR;
-}
 \\ {
   return Parser::token::LAMBDA;
 }
 -> {
   return Parser::token::ARROW;
+}
+: {
+  return Parser::token::COLON;
+}
+true {
+  return Parser::token::TRUE;
+}
+false {
+  return Parser::token::FALSE;
+}
+if {
+  return Parser::token::IF;
+}
+then {
+  return Parser::token::THEN;
+}
+else {
+  return Parser::token::ELSE;
+}
+0 {
+  return Parser::token::ZERO;
+}
+succ {
+  lval.build<std::string>(YYText());
+  return Parser::token::PREFIX;
+}
+pred {
+  lval.build<std::string>(YYText());
+  return Parser::token::PREFIX;
+}
+iszero {
+  lval.build<std::string>(YYText());
+  return Parser::token::PREFIX;
+}
+[[:lower:]][[:alnum:]_]* {
+  lval.build<std::string>(YYText());
+  return Parser::token::VAR;
+}
+[[:upper:]][[:alnum:]_]* {
+  lval.build<std::string>(YYText());
+  return Parser::token::TYPE;
 }
 
 %%
