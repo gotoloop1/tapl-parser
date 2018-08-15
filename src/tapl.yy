@@ -22,88 +22,96 @@ int yylex(tapl::Parser::semantic_type* lval, Lexer& lexer);
 using namespace json11;
 }
 
-%token TRUE FALSE
-%token IF THEN ELSE
+%token <std::string> VAR
 %token SEP LPAR RPAR
-%token ZERO
-%token <std::string> PREFIX
+%token ARROW LAMBDA
 
+%type <json11::Json> declare declare_s s_declare_s
 %type <json11::Json> factor
-%type <json11::Json> prefix
+%type <json11::Json> apply apply_s
 %type <json11::Json> term
-%type <json11::Json> expr expr_s s_expr_s
+%type <json11::Json> expr
 
 %start input
 
 %%
 
 input
-	: s_expr_s {
-		json.push_back($1);
-	}
-s_expr_s
-	: expr_s {
-		$$ = $1;
-	}
-	| SEP s_expr_s {
-		$$ = $2;
-	}
-expr_s
 	: expr {
-		$$ = $1;
-	}
-	| expr_s SEP {
-		$$ = $1;
+		json.push_back($1);
 	}
 expr
 	: term {
 		$$ = $1;
 	}
-	| IF SEP term SEP THEN SEP term SEP ELSE SEP term {
+	| LAMBDA s_declare_s ARROW expr {
 		$$ = Json::object{
-			{"rule", "if"},
-			{"cond", $3},
-			{"true", $7},
-			{"false", $11}
+			{"rule", "lambda"},
+			{"arg", $2},
+			{"body", $4}
+		};
+	}
+	| SEP LAMBDA s_declare_s ARROW expr {
+		$$ = Json::object{
+			{"rule", "lambda"},
+			{"arg", $3},
+			{"body", $5}
 		};
 	}
 term
-	: prefix {
+	: apply {
 		$$ = $1;
 	}
-prefix
-	: factor {
+	| SEP term {
+		$$ = $2;
+	}
+apply_s
+	: apply SEP {
 		$$ = $1;
 	}
-	| PREFIX SEP prefix {
+apply
+	: apply_s {
+		$$ = $1;
+	}
+	| factor {
+		$$ = $1;
+	}
+  | apply_s factor {
 		$$ = Json::object{
-			{"rule", $1},
-			{"arg", $3}
+			{"rule", "apply"},
+			{"func", $1},
+			{"arg", $2}
 		};
 	}
 factor
-	: LPAR s_expr_s RPAR {
+	: LPAR expr RPAR {
 		$$ = $2;
 	}
-	| TRUE {
+	| VAR {
 		$$ = Json::object{
-			{"rule", "constant"},
-			{"type", "bool"},
-			{"value", "true"}
+			{"rule", "variable"},
+			{"value", $1}
 		};
 	}
-	| FALSE {
-		$$ = Json::object{
-			{"rule", "constant"},
-			{"type", "bool"},
-			{"value", "false"}
-		};
+s_declare_s
+	: declare_s {
+		$$ = $1;
 	}
-	| ZERO {
+	| SEP s_declare_s {
+		$$ = $2;
+	}
+declare_s
+	: declare {
+		$$ = $1;
+	}
+	| declare_s SEP {
+		$$ = $1;
+	}
+declare
+	: VAR {
 		$$ = Json::object{
-			{"rule", "constant"},
-			{"type", "int"},
-			{"value", "0"}
+			{"rule", "variable"},
+			{"value", $1}
 		};
 	}
 
