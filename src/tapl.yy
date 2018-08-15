@@ -25,43 +25,41 @@ using namespace json11;
 %token TRUE FALSE
 %token IF THEN ELSE
 %token SEP LPAR RPAR
+%token ZERO
+%token <std::string> PREFIX
 
 %type <json11::Json> factor
-%type <json11::Json> if if_s
+%type <json11::Json> prefix
 %type <json11::Json> term
-%type <json11::Json> expr
+%type <json11::Json> expr expr_s s_expr_s
 
 %start input
 
 %%
 
 input
-	: expr {
+	: s_expr_s {
 		json.push_back($1);
+	}
+s_expr_s
+	: expr_s {
+		$$ = $1;
+	}
+	| SEP s_expr_s {
+		$$ = $2;
+	}
+expr_s
+	: expr {
+		$$ = $1;
+	}
+	| expr_s SEP {
+		$$ = $1;
 	}
 expr
 	: term {
 		$$ = $1;
 	}
-term
-	: if_s {
-		$$ = $1;
-	}
-	| SEP term {
-		$$ = $2;
-	}
-if_s
-	: if {
-		$$ = $1;
-	}
-	| if_s SEP {
-		$$ = $1;
-	}
-if
-	: factor {
-		$$ = $1;
-	}
-	| IF SEP factor SEP THEN SEP factor SEP ELSE SEP factor {
+	| IF SEP term SEP THEN SEP term SEP ELSE SEP term {
 		$$ = Json::object{
 			{"rule", "if"},
 			{"cond", $3},
@@ -69,8 +67,22 @@ if
 			{"false", $11}
 		};
 	}
+term
+	: prefix {
+		$$ = $1;
+	}
+prefix
+	: factor {
+		$$ = $1;
+	}
+	| PREFIX SEP prefix {
+		$$ = Json::object{
+			{"rule", $1},
+			{"arg", $3}
+		};
+	}
 factor
-	: LPAR expr RPAR {
+	: LPAR s_expr_s RPAR {
 		$$ = $2;
 	}
 	| TRUE {
@@ -85,6 +97,13 @@ factor
 			{"rule", "constant"},
 			{"type", "bool"},
 			{"value", "false"}
+		};
+	}
+	| ZERO {
+		$$ = Json::object{
+			{"rule", "constant"},
+			{"type", "int"},
+			{"value", "0"}
 		};
 	}
 

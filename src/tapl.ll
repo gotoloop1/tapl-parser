@@ -39,6 +39,21 @@ then {
 else {
   return Parser::token::ELSE;
 }
+0 {
+  return Parser::token::ZERO;
+}
+succ {
+  lval.build<std::string>(YYText());
+  return Parser::token::PREFIX;
+}
+pred {
+  lval.build<std::string>(YYText());
+  return Parser::token::PREFIX;
+}
+iszero {
+  lval.build<std::string>(YYText());
+  return Parser::token::PREFIX;
+}
 
 %%
 
