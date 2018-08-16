@@ -248,7 +248,7 @@ factor
 	| ZERO {
 		$$ = Json::object{
 			{"rule", "constant"},
-			{"type", "Int"},
+			{"type", "Nat"},
 			{"value", "0"}
 		};
 	}
