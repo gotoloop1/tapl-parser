@@ -109,7 +109,8 @@ let
 	| s_let s_declare_s EQ expr IN let {
 		$$ = Json::object{
 			{"rule", "let"},
-			{"name", $2},
+			{"type", $2["type"]},
+			{"name", $2["value"]},
 			{"def", $4},
 			{"body", $6}
 		};
@@ -129,7 +130,8 @@ expr
 	| s_lambda s_declare_s ARROW expr {
 		$$ = Json::object{
 			{"rule", "lambda"},
-			{"arg", $2},
+			{"type", $2["type"]},
+			{"arg", $2["value"]},
 			{"body", $4}
 		};
 	}
