@@ -142,13 +142,10 @@ expr
 	}
 	| s_lang s_var s_eq let rang_s AS type_s {
 		$$ = Json::object{
-			{"rule", "ascrive"},
+			{"rule", "variant"},
 			{"type", $7},
-			{"value", Json::object{
-				{"rule", "variant"},
-				{"name", $2},
-				{"value", $4}
-			}}
+			{"name", $2},
+			{"value", $4}
 		};
 	}
 	| s_case expr OF case_body {
