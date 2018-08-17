@@ -68,18 +68,18 @@ case_body
 	:	s_lang s_var s_eq s_var_s rang_s FARROW stat {
 		$$ = Json::array{
 			Json::object{
-				{"tag", $2},
-				{"name", $4},
-				{"body", $7}
+				{"label", $2},
+				{"var", $4},
+				{"content", $7}
 			}
 		};
 	}
 	| case_body PIPE s_lang s_var s_eq s_var_s rang_s FARROW stat {
 		$1.push_back(
 			Json::object{
-				{"tag", $4},
-				{"name", $6},
-				{"body", $9}
+				{"label", $4},
+				{"var", $6},
+				{"content", $9}
 			}
 		);
 		$$ = $1;
@@ -88,16 +88,16 @@ record_body
 	: s_var s_eq let {
 		$$ = Json::array{
 			Json::object{
-				{"name", $1},
-				{"value", $3}
+				{"label", $1},
+				{"content", $3}
 			}
 		};
 	}
 	| record_body COMMA s_var s_eq let {
 		$1.push_back(
 			Json::object{
-				{"name", $3},
-				{"value", $5}
+				{"label", $3},
+				{"content", $5}
 			}
 		);
 		$$ = $1;
@@ -109,9 +109,8 @@ let
 	| s_let s_declare_s EQ expr IN let {
 		$$ = Json::object{
 			{"rule", "let"},
-			{"type", $2["type"]},
-			{"name", $2["value"]},
-			{"def", $4},
+			{"var", $2},
+			{"content", $4},
 			{"body", $6}
 		};
 	}
@@ -130,8 +129,7 @@ expr
 	| s_lambda s_declare_s ARROW expr {
 		$$ = Json::object{
 			{"rule", "lambda"},
-			{"type", $2["type"]},
-			{"arg", $2["value"]},
+			{"arg", $2},
 			{"body", $4}
 		};
 	}
@@ -139,21 +137,20 @@ expr
 		$$ = Json::object{
 			{"rule", "ascrive"},
 			{"type", $3},
-			{"value", $1}
+			{"body", $1}
 		};
 	}
-	| s_lang s_var s_eq let rang_s AS type_s {
+	| s_lang s_var s_eq let rang_s {
 		$$ = Json::object{
 			{"rule", "variant"},
-			{"type", $7},
-			{"name", $2},
-			{"value", $4}
+			{"label", $2},
+			{"content", $4}
 		};
 	}
 	| s_case expr OF case_body {
 		$$ = Json::object{
 			{"rule", "case"},
-			{"var", $2},
+			{"content", $2},
 			{"body", $4}
 		};
 	}
@@ -211,7 +208,7 @@ proj
 		$$ = Json::object{
 			{"rule", "projrcd"},
 			{"var", $1},
-			{"name", $3}
+			{"label", $3}
 		};
 	}
 factor
@@ -283,7 +280,7 @@ declare
 		$$ = Json::object{
 			{"rule", "annotation"},
 			{"type", $3},
-			{"value", $1}
+			{"body", $1}
 		};
 	}
 type_def
@@ -291,7 +288,7 @@ type_def
 		$$ = Json::object{
 			{"rule", "typedef"},
 			{"name", $3},
-			{"body", $5}
+			{"type", $5}
 		};
 	}
 type_s
@@ -309,7 +306,7 @@ type_variant_body
 	: s_var s_colon type_lambda_s {
 		$$ = Json::array{
 			Json::object{
-				{"name", $1},
+				{"label", $1},
 				{"type", $3}
 			}
 		};
@@ -317,7 +314,7 @@ type_variant_body
 	| type_variant_body COMMA s_var s_colon type_lambda_s {
 		$1.push_back(
 			Json::object{
-				{"name", $3},
+				{"label", $3},
 				{"type", $5}
 			}
 		);
@@ -327,7 +324,7 @@ type_record_body
 	: s_var s_colon type_lambda_s {
 		$$ = Json::array{
 			Json::object{
-				{"name", $1},
+				{"label", $1},
 				{"type", $3}
 			}
 		};
@@ -335,7 +332,7 @@ type_record_body
 	| type_record_body COMMA s_var s_colon type_lambda_s {
 		$1.push_back(
 			Json::object{
-				{"name", $3},
+				{"label", $3},
 				{"type", $5}
 			}
 		);
