@@ -99,6 +99,9 @@ in {
 type {
   return Parser::token::TYPE;
 }
+def {
+  return Parser::token::DEF;
+}
 case {
   return Parser::token::CASE;
 }

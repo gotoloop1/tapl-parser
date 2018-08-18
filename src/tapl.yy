@@ -30,13 +30,14 @@ using namespace json11;
 %token ZERO
 %token <std::string> PREFIX
 %token UNIT SEMIC SS
-%token AS LET IN TYPE CASE OF
+%token AS LET IN TYPE DEF CASE OF
 
 %type <json11::Json> s_var s_var_s
 %type <json11::Json> type_factor s_type_factor s_type_factor_s
 %type <json11::Json> type_lambda type_lambda_s
 %type <json11::Json::array> type_record_body type_variant_body
-%type <json11::Json> type type_s type_def
+%type <json11::Json> type_record type_variant
+%type <json11::Json> type type_s
 %type <json11::Json> declare declare_s s_declare_s
 %type <json11::Json> factor proj
 %type <json11::Json> prefix
@@ -44,26 +45,49 @@ using namespace json11;
 %type <json11::Json> term
 %type <json11::Json> expr stat let
 %type <json11::Json::array> record_body case_body
+%type <json11::Json> record
+%type <json11::Json> type_def def
+%type <json11::Json> top
 
 %start input
 
 %%
 
 input
-	: let {
+	: top {
 		json.push_back($1);
 	}
-	| type_def {
-		json.push_back($1);
-	}
-	| input SS let {
-		json.push_back($3);
-	}
-	| input SS type_def {
+	| input SS top {
 		json.push_back($3);
 	}
 	| input SS {}
 	| input SS SEP {}
+top
+	: let {
+		$$ = $1;
+	}
+	| type_def {
+		$$ = $1;
+	}
+	| def {
+		$$ = $1;
+	}
+def
+	: s_def s_declare_s EQ let {
+		$$ = Json::object{
+			{"rule", "def"},
+			{"var", $2},
+			{"content", $4}
+		};
+	}
+type_def
+	: s_type_def SEP TNAME s_eq type_s {
+		$$ = Json::object{
+			{"rule", "typedef"},
+			{"name", $3},
+			{"type", $5}
+		};
+	}
 case_body
 	:	s_lang s_var s_eq s_var_s rang_s FARROW stat {
 		$$ = Json::array{
@@ -83,6 +107,25 @@ case_body
 			}
 		);
 		$$ = $1;
+	}
+record
+	: LBRA record_body RBRA {
+		$$ = Json::object{
+			{"rule", "record"},
+			{"body", $2}
+		};
+	}
+	| LBRA RBRA {
+		$$ = Json::object{
+			{"rule", "record"},
+			{"body", Json::array{}}
+		};
+	}
+	| LBRA SEP RBRA {
+		$$ = Json::object{
+			{"rule", "record"},
+			{"body", Json::array{}}
+		};
 	}
 record_body
 	: s_var s_eq let {
@@ -106,7 +149,7 @@ let
 	: expr {
 		$$ = $1;
 	}
-	| s_let s_declare_s EQ expr IN let {
+	| s_let s_declare_s EQ let IN let {
 		$$ = Json::object{
 			{"rule", "let"},
 			{"var", $2},
@@ -118,7 +161,7 @@ expr
 	: stat {
 		$$ = $1;
 	}
-	| s_if expr THEN expr ELSE expr {
+	| s_if let THEN let ELSE let {
 		$$ = Json::object{
 			{"rule", "if"},
 			{"cond", $2},
@@ -126,7 +169,7 @@ expr
 			{"false", $6}
 		};
 	}
-	| s_lambda s_declare_s ARROW expr {
+	| s_lambda s_declare_s ARROW let {
 		$$ = Json::object{
 			{"rule", "lambda"},
 			{"arg", $2},
@@ -147,7 +190,7 @@ expr
 			{"content", $4}
 		};
 	}
-	| s_case expr OF case_body {
+	| s_case let OF case_body {
 		$$ = Json::object{
 			{"rule", "case"},
 			{"content", $2},
@@ -215,11 +258,8 @@ factor
 	: LPAR let RPAR {
 		$$ = $2;
 	}
-	| LBRA record_body RBRA {
-		$$ = Json::object{
-			{"rule", "record"},
-			{"body", $2}
-		};
+	| record {
+		$$ = $1;
 	}
 	| VAR {
 		$$ = Json::object{
@@ -283,14 +323,6 @@ declare
 			{"body", $1}
 		};
 	}
-type_def
-	: TYPE SEP TNAME s_eq type_s {
-		$$ = Json::object{
-			{"rule", "typedef"},
-			{"name", $3},
-			{"type", $5}
-		};
-	}
 type_s
 	: type {
 		$$ = $1;
@@ -301,6 +333,25 @@ type_s
 type
 	: type_lambda {
 		$$ = $1;
+	}
+type_variant
+	: LANG type_variant_body RANG {
+		$$ = Json::object{
+			{"rule", "variant"},
+			{"body", $2}
+		};
+	}
+	| LANG RANG {
+		$$ = Json::object{
+			{"rule", "variant"},
+			{"body", Json::array{}}
+		};
+	}
+	| LANG SEP RANG {
+		$$ = Json::object{
+			{"rule", "variant"},
+			{"body", Json::array{}}
+		};
 	}
 type_variant_body
 	: s_var s_colon type_lambda_s {
@@ -319,6 +370,25 @@ type_variant_body
 			}
 		);
 		$$ = $1;
+	}
+type_record
+	: LBRA type_record_body RBRA {
+		$$ = Json::object{
+			{"rule", "record"},
+			{"body", $2}
+		};
+	}
+	| LBRA RBRA {
+		$$ = Json::object{
+			{"rule", "record"},
+			{"body", Json::array{}}
+		};
+	}
+	| LBRA SEP RBRA {
+		$$ = Json::object{
+			{"rule", "record"},
+			{"body", Json::array{}}
+		};
 	}
 type_record_body
 	: s_var s_colon type_lambda_s {
@@ -374,17 +444,11 @@ type_factor
 	: LPAR type_s RPAR {
 		$$ = $2;
 	}
-	| LBRA type_record_body RBRA {
-		$$ = Json::object{
-			{"rule", "record"},
-			{"body", $2}
-		};
+	| type_variant {
+		$$ = $1;
 	}
-	| LANG type_variant_body RANG {
-		$$ = Json::object{
-			{"rule", "variant"},
-			{"body", $2}
-		};
+	| type_record {
+		$$ = $1;
 	}
 	| TNAME {
 		$$ = Json::object{
@@ -430,6 +494,12 @@ s_var
 	| SEP s_var {
 		$$ = $2;
 	}
+s_type_def
+	: TYPE {}
+	| SEP s_type_def {}
+s_def
+	: DEF {}
+	| SEP s_def {}
 
 %%
 
